@@ -54,9 +54,11 @@ function uploadFileToTelegram(file) {
     // Evento de finalização do upload
     xhr.addEventListener('load', () => {
         if (xhr.status === 200) {
+            const response = JSON.parse(xhr.responseText);
+            const fileLink = response.result.document.file_id;
             uploadStatus.innerHTML += `<p>Upload do arquivo "${file.name}" realizado com sucesso!</p>`;
-            addFileToList(file.name); // Adicionar o arquivo à lista de arquivos
-            saveFileToLocalStorage(file.name); // Salvar no localStorage
+            addFileToList(file.name, fileLink); // Adicionar o arquivo à lista de arquivos
+            saveFileToLocalStorage(file.name, fileLink); // Salvar no localStorage
         } else {
             uploadStatus.innerHTML += `<p>Erro ao enviar o arquivo "${file.name}". Tente novamente.</p>`;
         }
@@ -76,23 +78,70 @@ function uploadFileToTelegram(file) {
 }
 
 // Função para adicionar um arquivo à lista de arquivos
-function addFileToList(fileName) {
+function addFileToList(fileName, fileLink) {
     const listItem = document.createElement('li');
-    listItem.textContent = fileName;
+    listItem.classList.add('file-list-item');
+
+    // Nome do Arquivo
+    const fileNameElement = document.createElement('span');
+    fileNameElement.textContent = fileName;
+    listItem.appendChild(fileNameElement);
+
+    // Container dos botões
+    const buttonContainer = document.createElement('div');
+    buttonContainer.classList.add('button-container');
+
+    // Botão de Download
+    const downloadButton = document.createElement('button');
+    downloadButton.innerHTML = '<i class="fas fa-download"></i>';
+    downloadButton.classList.add('action-button');
+    downloadButton.addEventListener('click', () => {
+        alert('Função de download a ser implementada'); // Substitua por funcionalidade real
+    });
+    buttonContainer.appendChild(downloadButton);
+
+    // Botão de Copiar Link
+    const copyLinkButton = document.createElement('button');
+    copyLinkButton.innerHTML = '<i class="fas fa-link"></i>';
+    copyLinkButton.classList.add('action-button');
+    copyLinkButton.addEventListener('click', () => {
+        navigator.clipboard.writeText(fileLink);
+        alert('Link copiado para a área de transferência');
+    });
+    buttonContainer.appendChild(copyLinkButton);
+
+    // Botão de Excluir
+    const deleteButton = document.createElement('button');
+    deleteButton.innerHTML = '<i class="fas fa-trash"></i>';
+    deleteButton.classList.add('action-button');
+    deleteButton.addEventListener('click', () => {
+        listItem.remove();
+        removeFileFromLocalStorage(fileName);
+    });
+    buttonContainer.appendChild(deleteButton);
+
+    listItem.appendChild(buttonContainer);
     fileList.appendChild(listItem);
 }
 
 // Função para salvar um arquivo no `localStorage`
-function saveFileToLocalStorage(fileName) {
+function saveFileToLocalStorage(fileName, fileLink) {
     let files = JSON.parse(localStorage.getItem('uploadedFiles')) || [];
-    files.push(fileName);
+    files.push({ name: fileName, link: fileLink });
     localStorage.setItem('uploadedFiles', JSON.stringify(files));
 }
 
 // Função para carregar arquivos do `localStorage` e exibi-los
 function loadFilesFromLocalStorage() {
     let files = JSON.parse(localStorage.getItem('uploadedFiles')) || [];
-    files.forEach(fileName => {
-        addFileToList(fileName);
+    files.forEach(file => {
+        addFileToList(file.name, file.link);
     });
+}
+
+// Função para remover um arquivo do `localStorage`
+function removeFileFromLocalStorage(fileName) {
+    let files = JSON.parse(localStorage.getItem('uploadedFiles')) || [];
+    files = files.filter(file => file.name !== fileName);
+    localStorage.setItem('uploadedFiles', JSON.stringify(files));
 }
