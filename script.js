@@ -9,6 +9,7 @@ const fileInput = document.getElementById('file-input');
 const uploadButton = document.getElementById('upload-button');
 const uploadStatus = document.getElementById('upload-status');
 const progressBar = document.getElementById('file-progress');
+const fileList = document.getElementById('file-list');
 
 // Função para iniciar o upload dos arquivos
 uploadButton.addEventListener('click', (e) => {
@@ -49,6 +50,7 @@ function uploadFileToTelegram(file) {
     xhr.addEventListener('load', () => {
         if (xhr.status === 200) {
             uploadStatus.innerHTML += `<p>Upload do arquivo "${file.name}" realizado com sucesso!</p>`;
+            addFileToList(file.name); // Adicionar o arquivo à lista de arquivos
         } else {
             uploadStatus.innerHTML += `<p>Erro ao enviar o arquivo "${file.name}". Tente novamente.</p>`;
         }
@@ -65,4 +67,11 @@ function uploadFileToTelegram(file) {
 
     // Enviar os dados do formulário
     xhr.send(formData);
+}
+
+// Função para adicionar um arquivo à lista de arquivos
+function addFileToList(fileName) {
+    const listItem = document.createElement('li');
+    listItem.textContent = fileName;
+    fileList.appendChild(listItem);
 }
