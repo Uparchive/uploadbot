@@ -1,6 +1,5 @@
 // Este script JavaScript fornece funcionalidades para um site de upload de arquivos que usa a API do Telegram para armazenar os arquivos.
 
-// Configuração do Bot do Telegram
 const BOT_TOKEN = '7279799450:AAGnJRv0zNAbweCwpcTbHsgCo3Bo_9N8fiY'; // Substitua pelo token do bot do Telegram
 const CHAT_ID = '1277559138'; // Substitua pelo chat ID onde os arquivos serão enviados
 
@@ -60,6 +59,7 @@ function uploadFileToTelegram(file) {
             addFileToList(file.name, fileId); // Adicionar o arquivo à lista de arquivos
             saveFileToLocalStorage(file.name, fileId); // Salvar no localStorage
         } else {
+            console.error('Erro no upload:', xhr.responseText);
             uploadStatus.innerHTML += `<p>Erro ao enviar o arquivo "${file.name}". Tente novamente.</p>`;
         }
         progressBar.style.display = 'none'; // Ocultar a barra de progresso ao finalizar
@@ -68,6 +68,7 @@ function uploadFileToTelegram(file) {
 
     // Evento de erro
     xhr.addEventListener('error', () => {
+        console.error('Erro ao conectar ao Telegram:', xhr.responseText);
         uploadStatus.innerHTML += `<p>Erro ao conectar-se ao Telegram para o arquivo "${file.name}". Verifique sua conexão.</p>`;
         progressBar.style.display = 'none';
         progressBar.value = 0;
@@ -96,7 +97,10 @@ function addFileToList(fileName, fileId) {
     downloadButton.innerHTML = '<i class="fas fa-download"></i>';
     downloadButton.classList.add('action-button');
     downloadButton.addEventListener('click', () => {
-        getDownloadLink(fileId, fileName);
+        // Adicionando um pequeno delay para garantir que o link esteja disponível
+        setTimeout(() => {
+            getDownloadLink(fileId, fileName);
+        }, 2000);
     });
     buttonContainer.appendChild(downloadButton);
 
@@ -105,7 +109,10 @@ function addFileToList(fileName, fileId) {
     copyLinkButton.innerHTML = '<i class="fas fa-link"></i>';
     copyLinkButton.classList.add('action-button');
     copyLinkButton.addEventListener('click', () => {
-        getDownloadLink(fileId, null, true);
+        // Adicionando um pequeno delay para garantir que o link esteja disponível
+        setTimeout(() => {
+            getDownloadLink(fileId, null, true);
+        }, 2000);
     });
     buttonContainer.appendChild(copyLinkButton);
 
@@ -144,10 +151,12 @@ function getDownloadLink(fileId, fileName, copyOnly = false) {
                     document.body.removeChild(a);
                 }
             } else {
+                console.error('Erro ao obter o link de download:', data);
                 alert('Erro ao obter o link de download. Tente novamente.');
             }
         })
         .catch(error => {
+            console.error('Erro ao conectar-se ao Telegram para obter o link do arquivo:', error);
             alert('Erro ao conectar-se ao Telegram para obter o link do arquivo.');
         });
 }
