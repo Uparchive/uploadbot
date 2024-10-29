@@ -14,8 +14,8 @@
     <!-- Atualize a seção de upload -->
     <section id="upload-section">
         <h2>Enviar Arquivos</h2>
-        <form id="upload-form">
-            <input type="file" id="file-input" multiple>
+        <form id="upload-form" action="http://localhost:3001/upload" method="post" enctype="multipart/form-data">
+            <input type="file" id="file-input" name="file" multiple>
             <div id="rename-file-list"></div>
             <button type="submit" id="upload-button">Enviar Arquivos</button>
         </form>
