@@ -25,153 +25,60 @@ uploadButton.addEventListener('click', (e) => {
 
     // Iteração sobre os arquivos selecionados e realiza o upload
     Array.from(files).forEach((file) => {
-        uploadFileToTelegram(file);
+        uploadFileToServer(file);
     });
 });
 
-// Função para fazer o upload de um arquivo para o Telegram
-function uploadFileToTelegram(file) {
+// Função para fazer o upload de um arquivo para o servidor
+function uploadFileToServer(file) {
     const formData = new FormData();
-    formData.append('chat_id', CHAT_ID);
-    formData.append('document', file);
+    formData.append('file', file);
 
-    const xhr = new XMLHttpRequest();
-    xhr.open('POST', `https://api.telegram.org/bot${BOT_TOKEN}/sendDocument`, true);
-
-    // Exibir a barra de progresso
-    progressBar.style.display = 'block';
-
-    // Evento de progresso do upload
-    xhr.upload.addEventListener('progress', (e) => {
-        if (e.lengthComputable) {
-            const percentComplete = (e.loaded / e.total) * 100;
-            progressBar.value = percentComplete;
-        }
-    });
-
-    // Evento de finalização do upload
-    xhr.addEventListener('load', () => {
-        if (xhr.status === 200) {
-            const response = JSON.parse(xhr.responseText);
-            const fileId = response.result.document.file_id;
-            uploadStatus.innerHTML += `<p>Upload do arquivo "${file.name}" realizado com sucesso!</p>`;
-            addFileToList(file.name, fileId); // Adicionar o arquivo à lista de arquivos
-            saveFileToLocalStorage(file.name, fileId); // Salvar no localStorage
-        } else {
-            console.error('Erro no upload:', xhr.responseText);
-            uploadStatus.innerHTML += `<p>Erro ao enviar o arquivo "${file.name}". Tente novamente.</p>`;
-        }
-        progressBar.style.display = 'none'; // Ocultar a barra de progresso ao finalizar
-        progressBar.value = 0; // Reiniciar valor
-    });
-
-    // Evento de erro
-    xhr.addEventListener('error', () => {
-        console.error('Erro ao conectar ao Telegram:', xhr.responseText);
-        uploadStatus.innerHTML += `<p>Erro ao conectar-se ao Telegram para o arquivo "${file.name}". Verifique sua conexão.</p>`;
-        progressBar.style.display = 'none';
-        progressBar.value = 0;
-    });
-
-    // Enviar os dados do formulário
-    xhr.send(formData);
-}
-
-// Função para adicionar um arquivo à lista de arquivos
-function addFileToList(fileName, fileId) {
-    const listItem = document.createElement('li');
-    listItem.classList.add('file-list-item');
-
-    // Nome do Arquivo
-    const fileNameElement = document.createElement('span');
-    fileNameElement.textContent = fileName;
-    listItem.appendChild(fileNameElement);
-
-    // Container dos botões
-    const buttonContainer = document.createElement('div');
-    buttonContainer.classList.add('button-container');
-
-    // Botão de Download
-    const downloadButton = document.createElement('button');
-    downloadButton.innerHTML = '<i class="fas fa-download"></i>';
-    downloadButton.classList.add('action-button');
-    downloadButton.addEventListener('click', () => {
-        getDownloadLink(fileId, fileName);
-    });
-    buttonContainer.appendChild(downloadButton);
-
-    // Botão de Copiar Link
-    const copyLinkButton = document.createElement('button');
-    copyLinkButton.innerHTML = '<i class="fas fa-link"></i>';
-    copyLinkButton.classList.add('action-button');
-    copyLinkButton.addEventListener('click', () => {
-        getDownloadLink(fileId, null, true);
-    });
-    buttonContainer.appendChild(copyLinkButton);
-
-    // Botão de Excluir
-    const deleteButton = document.createElement('button');
-    deleteButton.innerHTML = '<i class="fas fa-trash"></i>';
-    deleteButton.classList.add('action-button');
-    deleteButton.addEventListener('click', () => {
-        listItem.remove();
-        removeFileFromLocalStorage(fileName);
-    });
-    buttonContainer.appendChild(deleteButton);
-
-    listItem.appendChild(buttonContainer);
-    fileList.appendChild(listItem);
-}
-
-// Função para obter o link de download do Telegram
-function getDownloadLink(fileId, fileName, copyOnly = false) {
-    fetch(`https://api.telegram.org/bot${BOT_TOKEN}/getFile?file_id=${fileId}`)
+    // Enviar o arquivo para o servidor
+    fetch('/upload', { // Supondo que tenha um endpoint /upload no backend
+        method: 'POST',
+        body: formData,
+    })
         .then(response => response.json())
         .then(data => {
-            if (data.ok) {
-                const filePath = data.result.file_path;
-                const fileUrl = `https://api.telegram.org/file/bot${BOT_TOKEN}/${filePath}`;
+            if (data.success) {
+                const torrentFileName = data.torrentFileName;
+                const torrentFilePath = data.torrentFilePath;
+                uploadStatus.innerHTML += `<p>Arquivo "${file.name}" enviado e convertido para torrent com sucesso!</p>`;
                 
-                if (copyOnly) {
-                    navigator.clipboard.writeText(fileUrl);
-                    alert('Link copiado para a área de transferência');
-                } else {
-                    const a = document.createElement('a');
-                    a.href = fileUrl;
-                    a.download = fileName;
-                    document.body.appendChild(a);
-                    a.click();
-                    document.body.removeChild(a);
-                }
+                // Agora envie o arquivo .torrent para o Telegram
+                uploadTorrentToTelegram(torrentFileName, torrentFilePath);
             } else {
-                console.error('Erro ao obter o link de download:', data);
-                alert('Erro ao obter o link de download. Tente novamente.');
+                uploadStatus.innerHTML += `<p>Erro ao converter "${file.name}" para torrent. Tente novamente.</p>`;
             }
         })
         .catch(error => {
-            console.error('Erro ao conectar-se ao Telegram para obter o link do arquivo:', error);
-            alert('Erro ao conectar-se ao Telegram para obter o link do arquivo.');
+            console.error('Erro ao enviar o arquivo para o servidor:', error);
+            uploadStatus.innerHTML += `<p>Erro ao enviar o arquivo "${file.name}" para o servidor. Verifique sua conexão.</p>`;
         });
 }
 
-// Função para salvar um arquivo no `localStorage`
-function saveFileToLocalStorage(fileName, fileId) {
-    let files = JSON.parse(localStorage.getItem('uploadedFiles')) || [];
-    files.push({ name: fileName, id: fileId });
-    localStorage.setItem('uploadedFiles', JSON.stringify(files));
-}
+// Função para enviar o arquivo .torrent para o Telegram
+function uploadTorrentToTelegram(torrentFileName, torrentFilePath) {
+    const formData = new FormData();
+    formData.append('chat_id', CHAT_ID);
+    formData.append('document', new Blob([torrentFilePath]), torrentFileName);
 
-// Função para carregar arquivos do `localStorage` e exibi-los
-function loadFilesFromLocalStorage() {
-    let files = JSON.parse(localStorage.getItem('uploadedFiles')) || [];
-    files.forEach(file => {
-        addFileToList(file.name, file.id);
+    fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendDocument`, {
+        method: 'POST',
+        body: formData,
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.ok) {
+            uploadStatus.innerHTML += `<p>Arquivo .torrent "${torrentFileName}" enviado ao Telegram com sucesso!</p>`;
+        } else {
+            console.error('Erro ao enviar o arquivo .torrent ao Telegram:', data);
+            uploadStatus.innerHTML += `<p>Erro ao enviar o arquivo .torrent "${torrentFileName}" ao Telegram.</p>`;
+        }
+    })
+    .catch(error => {
+        console.error('Erro ao conectar ao Telegram:', error);
+        uploadStatus.innerHTML += `<p>Erro ao conectar ao Telegram para o arquivo .torrent "${torrentFileName}".</p>`;
     });
-}
-
-// Função para remover um arquivo do `localStorage`
-function removeFileFromLocalStorage(fileName) {
-    let files = JSON.parse(localStorage.getItem('uploadedFiles')) || [];
-    files = files.filter(file => file.name !== fileName);
-    localStorage.setItem('uploadedFiles', JSON.stringify(files));
 }
