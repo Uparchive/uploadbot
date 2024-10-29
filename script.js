@@ -55,10 +55,10 @@ function uploadFileToTelegram(file) {
     xhr.addEventListener('load', () => {
         if (xhr.status === 200) {
             const response = JSON.parse(xhr.responseText);
-            const fileLink = response.result.document.file_id;
+            const fileId = response.result.document.file_id;
             uploadStatus.innerHTML += `<p>Upload do arquivo "${file.name}" realizado com sucesso!</p>`;
-            addFileToList(file.name, fileLink); // Adicionar o arquivo à lista de arquivos
-            saveFileToLocalStorage(file.name, fileLink); // Salvar no localStorage
+            addFileToList(file.name, fileId); // Adicionar o arquivo à lista de arquivos
+            saveFileToLocalStorage(file.name, fileId); // Salvar no localStorage
         } else {
             uploadStatus.innerHTML += `<p>Erro ao enviar o arquivo "${file.name}". Tente novamente.</p>`;
         }
@@ -78,7 +78,7 @@ function uploadFileToTelegram(file) {
 }
 
 // Função para adicionar um arquivo à lista de arquivos
-function addFileToList(fileName, fileLink) {
+function addFileToList(fileName, fileId) {
     const listItem = document.createElement('li');
     listItem.classList.add('file-list-item');
 
@@ -96,7 +96,7 @@ function addFileToList(fileName, fileLink) {
     downloadButton.innerHTML = '<i class="fas fa-download"></i>';
     downloadButton.classList.add('action-button');
     downloadButton.addEventListener('click', () => {
-        alert('Função de download a ser implementada'); // Substitua por funcionalidade real
+        getDownloadLink(fileId, fileName);
     });
     buttonContainer.appendChild(downloadButton);
 
@@ -105,8 +105,7 @@ function addFileToList(fileName, fileLink) {
     copyLinkButton.innerHTML = '<i class="fas fa-link"></i>';
     copyLinkButton.classList.add('action-button');
     copyLinkButton.addEventListener('click', () => {
-        navigator.clipboard.writeText(fileLink);
-        alert('Link copiado para a área de transferência');
+        getDownloadLink(fileId, null, true);
     });
     buttonContainer.appendChild(copyLinkButton);
 
@@ -124,10 +123,39 @@ function addFileToList(fileName, fileLink) {
     fileList.appendChild(listItem);
 }
 
+// Função para obter o link de download do Telegram
+function getDownloadLink(fileId, fileName, copyOnly = false) {
+    fetch(`https://api.telegram.org/bot${BOT_TOKEN}/getFile?file_id=${fileId}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.ok) {
+                const filePath = data.result.file_path;
+                const fileUrl = `https://api.telegram.org/file/bot${BOT_TOKEN}/${filePath}`;
+                
+                if (copyOnly) {
+                    navigator.clipboard.writeText(fileUrl);
+                    alert('Link copiado para a área de transferência');
+                } else {
+                    const a = document.createElement('a');
+                    a.href = fileUrl;
+                    a.download = fileName;
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                }
+            } else {
+                alert('Erro ao obter o link de download. Tente novamente.');
+            }
+        })
+        .catch(error => {
+            alert('Erro ao conectar-se ao Telegram para obter o link do arquivo.');
+        });
+}
+
 // Função para salvar um arquivo no `localStorage`
-function saveFileToLocalStorage(fileName, fileLink) {
+function saveFileToLocalStorage(fileName, fileId) {
     let files = JSON.parse(localStorage.getItem('uploadedFiles')) || [];
-    files.push({ name: fileName, link: fileLink });
+    files.push({ name: fileName, id: fileId });
     localStorage.setItem('uploadedFiles', JSON.stringify(files));
 }
 
@@ -135,7 +163,7 @@ function saveFileToLocalStorage(fileName, fileLink) {
 function loadFilesFromLocalStorage() {
     let files = JSON.parse(localStorage.getItem('uploadedFiles')) || [];
     files.forEach(file => {
-        addFileToList(file.name, file.link);
+        addFileToList(file.name, file.id);
     });
 }
 
