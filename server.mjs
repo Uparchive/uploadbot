@@ -3,11 +3,18 @@ import multer from 'multer';
 import WebTorrent from 'webtorrent';
 import path from 'path';
 import fs from 'fs';
+import fetch from 'node-fetch';
 
 const app = express();
 const upload = multer({ dest: 'uploads/' });
 const client = new WebTorrent();
 
+const BOT_TOKEN = 'SEU_BOT_TOKEN';
+const CHAT_ID = 'SEU_CHAT_ID';
+
+app.use(express.static('public')); // Para servir arquivos estáticos
+
+// Endpoint de upload
 app.post('/upload', upload.single('file'), (req, res) => {
     const file = req.file;
 
@@ -17,22 +24,42 @@ app.post('/upload', upload.single('file'), (req, res) => {
 
     const filePath = path.join(process.cwd(), file.path);
 
-    // Adicionar seed usando WebTorrent e criar o .torrent automaticamente
+    // Criar o torrent usando WebTorrent
     client.seed(filePath, { name: file.originalname }, (torrent) => {
         console.log('Seeding iniciado para', torrent.infoHash);
 
         // Salvar o .torrent gerado no sistema
         const torrentBuffer = torrent.torrentFile;
-        const torrentFilePath = `${filePath}.torrent`;
+        const torrentFilePath = `uploads/${file.originalname}.torrent`;
         
-        fs.writeFile(torrentFilePath, torrentBuffer, (err) => {
+        fs.writeFile(torrentFilePath, torrentBuffer, async (err) => {
             if (err) {
                 console.error('Erro ao salvar o arquivo .torrent:', err);
                 return res.json({ success: false, message: 'Erro ao salvar o arquivo .torrent' });
             }
 
-            // Enviar de volta a resposta com informações sobre o torrent
-            res.json({ success: true, torrentFileName: `${file.originalname}.torrent`, torrentFilePath });
+            // Enviar o arquivo .torrent ao Telegram
+            const formData = new FormData();
+            formData.append('chat_id', CHAT_ID);
+            formData.append('document', fs.createReadStream(torrentFilePath));
+
+            try {
+                const response = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendDocument`, {
+                    method: 'POST',
+                    body: formData,
+                });
+                const result = await response.json();
+
+                if (result.ok) {
+                    res.json({ success: true, torrentFileName: `${file.originalname}.torrent`, torrentFilePath });
+                } else {
+                    console.error('Erro ao enviar o arquivo .torrent ao Telegram:', result);
+                    res.json({ success: false, message: 'Erro ao enviar o arquivo .torrent ao Telegram' });
+                }
+            } catch (error) {
+                console.error('Erro ao conectar ao Telegram:', error);
+                res.json({ success: false, message: 'Erro ao conectar ao Telegram' });
+            }
         });
     });
 });
