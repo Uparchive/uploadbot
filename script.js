@@ -1,13 +1,10 @@
 // Configuração do Bot do Telegram
 const BOT_TOKEN = '7279799450:AAGnJRv0zNAbweCwpcTbHsgCo3Bo_9N8fiY'; // Substitua pelo token do bot do Telegram
 const CHAT_ID = '1277559138'; // Substitua pelo chat ID onde os arquivos serão enviados
-
 // Elementos do DOM
 const fileInput = document.getElementById('file-input');
 const uploadButton = document.getElementById('upload-button');
 const uploadStatus = document.getElementById('upload-status');
-const progressBar = document.getElementById('file-progress');
-const fileList = document.getElementById('file-list');
 
 // Carregar a lista de arquivos do `localStorage` ao carregar a página
 document.addEventListener('DOMContentLoaded', () => {
@@ -35,7 +32,7 @@ function uploadFileToServer(file) {
     formData.append('file', file);
 
     // Enviar o arquivo para o servidor
-    fetch('/upload', { // Supondo que tenha um endpoint /upload no backend
+    fetch('/upload', {
         method: 'POST',
         body: formData,
     })
