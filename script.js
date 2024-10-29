@@ -1,16 +1,18 @@
 // Este script JavaScript fornece funcionalidades para um site de upload de arquivos que usa a API do Telegram para armazenar os arquivos.
 
 // Configuração do Bot do Telegram
-const BOT_TOKEN = 'SEU_BOT_TOKEN_AQUI'; // Substitua pelo token do bot do Telegram
-const CHAT_ID = 'SEU_CHAT_ID_AQUI'; // Substitua pelo chat ID onde os arquivos serão enviados
+const BOT_TOKEN = '7279799450:AAGnJRv0zNAbweCwpcTbHsgCo3Bo_9N8fiY'; // Substitua pelo token do bot do Telegram
+const CHAT_ID = '1277559138'; // Substitua pelo chat ID onde os arquivos serão enviados
 
 // Elementos do DOM
 const fileInput = document.getElementById('file-input');
 const uploadButton = document.getElementById('upload-button');
 const uploadStatus = document.getElementById('upload-status');
+const progressBar = document.getElementById('file-progress');
 
 // Função para iniciar o upload dos arquivos
-uploadButton.addEventListener('click', () => {
+uploadButton.addEventListener('click', (e) => {
+    e.preventDefault(); // Impedir o envio padrão do formulário
     const files = fileInput.files;
     if (files.length === 0) {
         alert('Por favor, selecione pelo menos um arquivo para fazer o upload.');
@@ -24,24 +26,43 @@ uploadButton.addEventListener('click', () => {
 });
 
 // Função para fazer o upload de um arquivo para o Telegram
-async function uploadFileToTelegram(file) {
+function uploadFileToTelegram(file) {
     const formData = new FormData();
     formData.append('chat_id', CHAT_ID);
     formData.append('document', file);
 
-    try {
-        const response = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendDocument`, {
-            method: 'POST',
-            body: formData,
-        });
+    const xhr = new XMLHttpRequest();
+    xhr.open('POST', `https://api.telegram.org/bot${BOT_TOKEN}/sendDocument`, true);
 
-        const result = await response.json();
-        if (result.ok) {
+    // Exibir a barra de progresso
+    progressBar.style.display = 'block';
+
+    // Evento de progresso do upload
+    xhr.upload.addEventListener('progress', (e) => {
+        if (e.lengthComputable) {
+            const percentComplete = (e.loaded / e.total) * 100;
+            progressBar.value = percentComplete;
+        }
+    });
+
+    // Evento de finalização do upload
+    xhr.addEventListener('load', () => {
+        if (xhr.status === 200) {
             uploadStatus.innerHTML += `<p>Upload do arquivo "${file.name}" realizado com sucesso!</p>`;
         } else {
             uploadStatus.innerHTML += `<p>Erro ao enviar o arquivo "${file.name}". Tente novamente.</p>`;
         }
-    } catch (error) {
+        progressBar.style.display = 'none'; // Ocultar a barra de progresso ao finalizar
+        progressBar.value = 0; // Reiniciar valor
+    });
+
+    // Evento de erro
+    xhr.addEventListener('error', () => {
         uploadStatus.innerHTML += `<p>Erro ao conectar-se ao Telegram para o arquivo "${file.name}". Verifique sua conexão.</p>`;
-    }
+        progressBar.style.display = 'none';
+        progressBar.value = 0;
+    });
+
+    // Enviar os dados do formulário
+    xhr.send(formData);
 }
