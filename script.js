@@ -11,6 +11,11 @@ const uploadStatus = document.getElementById('upload-status');
 const progressBar = document.getElementById('file-progress');
 const fileList = document.getElementById('file-list');
 
+// Carregar a lista de arquivos do `localStorage` ao carregar a página
+document.addEventListener('DOMContentLoaded', () => {
+    loadFilesFromLocalStorage();
+});
+
 // Função para iniciar o upload dos arquivos
 uploadButton.addEventListener('click', (e) => {
     e.preventDefault(); // Impedir o envio padrão do formulário
@@ -51,6 +56,7 @@ function uploadFileToTelegram(file) {
         if (xhr.status === 200) {
             uploadStatus.innerHTML += `<p>Upload do arquivo "${file.name}" realizado com sucesso!</p>`;
             addFileToList(file.name); // Adicionar o arquivo à lista de arquivos
+            saveFileToLocalStorage(file.name); // Salvar no localStorage
         } else {
             uploadStatus.innerHTML += `<p>Erro ao enviar o arquivo "${file.name}". Tente novamente.</p>`;
         }
@@ -74,4 +80,19 @@ function addFileToList(fileName) {
     const listItem = document.createElement('li');
     listItem.textContent = fileName;
     fileList.appendChild(listItem);
+}
+
+// Função para salvar um arquivo no `localStorage`
+function saveFileToLocalStorage(fileName) {
+    let files = JSON.parse(localStorage.getItem('uploadedFiles')) || [];
+    files.push(fileName);
+    localStorage.setItem('uploadedFiles', JSON.stringify(files));
+}
+
+// Função para carregar arquivos do `localStorage` e exibi-los
+function loadFilesFromLocalStorage() {
+    let files = JSON.parse(localStorage.getItem('uploadedFiles')) || [];
+    files.forEach(fileName => {
+        addFileToList(fileName);
+    });
 }
