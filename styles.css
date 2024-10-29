@@ -284,3 +284,72 @@ footer p {
     background-color: var(--button-hover-color);
     transform: translateY(-5px);
 }
+
+/* ========================================= */
+/* ======== Estilo dos Botões ============== */
+/* ========================================= */
+
+/* Estilo do item da lista de arquivos */
+.file-list-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px;
+    border-bottom: 1px solid #ddd;
+    background: #fff;
+    border-radius: 10px;
+    margin-bottom: 10px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.05);
+}
+
+/* Nome do arquivo */
+.file-list-item span {
+    font-weight: bold;
+}
+
+/* Container dos botões */
+.button-container {
+    display: flex;
+    gap: 15px;
+}
+
+/* Estilo dos botões */
+.action-button {
+    background: linear-gradient(135deg, #ff8c00, #ff6600);
+    color: #fff;
+    padding: 10px 15px;
+    border: none;
+    border-radius: 10px;
+    font-size: 1.2rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 3px 6px rgba(0, 0, 0, 0.1);
+}
+
+.action-button i {
+    font-size: 1.2rem;
+}
+
+/* Efeito ao passar o mouse nos botões */
+.action-button:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+    background: linear-gradient(135deg, #ff6600, #ff3300);
+}
+
+/* Ajuste de responsividade */
+@media (max-width: 768px) {
+    .file-list-item {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .button-container {
+        margin-top: 10px;
+        justify-content: space-around;
+        width: 100%;
+    }
+}
