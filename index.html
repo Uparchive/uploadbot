@@ -17,9 +17,12 @@
         <form id="upload-form">
             <input type="file" id="file-input" multiple>
             <div id="rename-file-list"></div>
-            <button type="submit">Enviar Arquivos</button>
+            <button type="submit" id="upload-button">Enviar Arquivos</button>
         </form>
-        <div id="progress-container"></div>
+        <div id="progress-container">
+            <progress id="file-progress" value="0" max="100" style="width: 100%; display: none;"></progress>
+        </div>
+        <div id="upload-status"></div>
     </section>
 
     <!-- Atualize a seção de lista de arquivos -->
