@@ -1,6 +1,7 @@
-// Configuração do Bot do Telegram
+// Configuração do Bot do Telegram usando variáveis de ambiente
 const BOT_TOKEN = '7279799450:AAGnJRv0zNAbweCwpcTbHsgCo3Bo_9N8fiY'; // Substitua pelo token do bot do Telegram
 const CHAT_ID = '1277559138'; // Substitua pelo chat ID onde os arquivos serão enviados
+
 // Elementos do DOM
 const fileInput = document.getElementById('file-input');
 const uploadButton = document.getElementById('upload-button');
@@ -17,16 +18,17 @@ uploadButton.addEventListener('click', (e) => {
     }
 
     Array.from(files).forEach((file) => {
-        uploadFileToServer(file);
+        convertAndUploadToTelegram(file);
     });
 });
 
-// Função para fazer o upload de um arquivo para o servidor
-function uploadFileToServer(file) {
+// Função para converter o arquivo em torrent e enviar para o Telegram
+function convertAndUploadToTelegram(file) {
+    // Converter o arquivo para .torrent (isso deve ser feito no backend)
     const formData = new FormData();
     formData.append('file', file);
 
-    fetch('/upload', {
+    fetch('https://seu-backend.herokuapp.com/upload', { // URL do seu backend
         method: 'POST',
         body: formData,
     })
@@ -35,6 +37,9 @@ function uploadFileToServer(file) {
             if (data.success) {
                 const torrentFileName = data.torrentFileName;
                 const torrentFilePath = data.torrentFilePath;
+
+                // Enviar o arquivo .torrent ao Telegram
+                sendToTelegram(torrentFileName, torrentFilePath);
 
                 // Adicionar o arquivo à lista de arquivos
                 addFileToList(torrentFileName, torrentFilePath);
@@ -45,6 +50,31 @@ function uploadFileToServer(file) {
         .catch(error => {
             console.error('Erro ao enviar o arquivo para o servidor:', error);
             uploadStatus.innerHTML += `<p>Erro ao enviar o arquivo "${file.name}" para o servidor. Verifique sua conexão.</p>`;
+        });
+}
+
+// Função para enviar o arquivo .torrent ao Telegram
+function sendToTelegram(torrentFileName, torrentFilePath) {
+    const formData = new FormData();
+    formData.append('chat_id', CHAT_ID);
+    formData.append('document', new Blob([torrentFilePath]), torrentFileName);
+
+    fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendDocument`, {
+        method: 'POST',
+        body: formData,
+    })
+        .then(response => response.json())
+        .then(data => {
+            if (data.ok) {
+                uploadStatus.innerHTML += `<p>Arquivo .torrent "${torrentFileName}" enviado ao Telegram com sucesso!</p>`;
+            } else {
+                console.error('Erro ao enviar o arquivo .torrent ao Telegram:', data);
+                uploadStatus.innerHTML += `<p>Erro ao enviar o arquivo .torrent "${torrentFileName}" ao Telegram.</p>`;
+            }
+        })
+        .catch(error => {
+            console.error('Erro ao conectar ao Telegram:', error);
+            uploadStatus.innerHTML += `<p>Erro ao conectar ao Telegram para o arquivo .torrent "${torrentFileName}".</p>`;
         });
 }
 
