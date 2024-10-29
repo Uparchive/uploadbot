@@ -1,5 +1,4 @@
-// Este script JavaScript fornece funcionalidades para um site de upload de arquivos que usa a API do Telegram para armazenar os arquivos.
-
+// Configuração do Bot do Telegram
 const BOT_TOKEN = '7279799450:AAGnJRv0zNAbweCwpcTbHsgCo3Bo_9N8fiY'; // Substitua pelo token do bot do Telegram
 const CHAT_ID = '1277559138'; // Substitua pelo chat ID onde os arquivos serão enviados
 
@@ -97,10 +96,7 @@ function addFileToList(fileName, fileId) {
     downloadButton.innerHTML = '<i class="fas fa-download"></i>';
     downloadButton.classList.add('action-button');
     downloadButton.addEventListener('click', () => {
-        // Adicionando um pequeno delay para garantir que o link esteja disponível
-        setTimeout(() => {
-            getDownloadLink(fileId, fileName);
-        }, 2000);
+        getDownloadLink(fileId, fileName);
     });
     buttonContainer.appendChild(downloadButton);
 
@@ -109,10 +105,7 @@ function addFileToList(fileName, fileId) {
     copyLinkButton.innerHTML = '<i class="fas fa-link"></i>';
     copyLinkButton.classList.add('action-button');
     copyLinkButton.addEventListener('click', () => {
-        // Adicionando um pequeno delay para garantir que o link esteja disponível
-        setTimeout(() => {
-            getDownloadLink(fileId, null, true);
-        }, 2000);
+        getDownloadLink(fileId, null, true);
     });
     buttonContainer.appendChild(copyLinkButton);
 
